@@ -5,28 +5,19 @@
  */
 package labyrinth;
 
-import com.sun.javafx.scene.traversal.Direction;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
 import java.awt.Image;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.imageio.ImageIO;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.Timer;
 import model.Position;
 import model.World;
-import model.WorldBuilder;
 import model.WorldItem;
 import res.Resource;
 
@@ -35,67 +26,71 @@ import res.Resource;
  * @author Ali pc
  */
 public class Board extends javax.swing.JPanel implements ActionListener{
-    
-    private Image dragon,tree,player,path,destination;
+    private World world;
+    private Image dragon,player,path,destination,wall;
     private final int[] resolution ={32,64,128};
-    private int scale=64;
-    private int x;
-    private int y;
+    private int scale=128;
     private Timer timer;
-    private WorldBuilder WB;
-    Position playerPos;
-    Position dragonPos;
-    World world;
-    public Board (World w) throws IOException {
+    private JFrame JF;
+    public Board (World w, JFrame JF) throws IOException {
+        int r=2;
+        this.JF=JF;
         
-        world = w;
-        WB =w.getWorldBuilder();
+        world   =       w;
         
-       
-        dragon  =       Resource.loadImage("res/worldElements/dragon"+resolution[1]+".png");
-        tree    =       Resource.loadImage("res/worldElements/tree"+resolution[1]+".png");
-        player  =       Resource.loadImage("res/worldElements/player"+resolution[1]+".png");
-        path    =       Resource.loadImage("res/worldElements/path"+resolution[1]+".jpg");
+        dragon  =       Resource.loadImage("res/worldElements/dragon"+resolution[r]+".png");
+        player  =       Resource.loadImage("res/worldElements/player"+resolution[r]+".png");
+        path    =       Resource.loadImage("res/worldElements/path"+resolution[r]+".jpg");
+        destination=    Resource.loadImage("res/worldElements/dest"+resolution[r]+".png");
+        wall=    Resource.loadImage("res/worldElements/wall"+resolution[r]+".png");
+        timer= new Timer(world.getWorldBuilder().getDifficulty().getSpeed(),this);
+        this.timer.start();
         
-        
-        timer=new Timer(999,this);
-        timer.start();
-        
-   
-        
+      
     }
 
     
-    
     public void refresh(){
         
-        Dimension dim =new Dimension(scale*WB.getCols(),scale*WB.getRows());
-        setPreferredSize(dim);
-        setSize(dim);
-        setMaximumSize(dim);
-        repaint();
-    
+        if(world.isWorldLoaded()){
+            
+            Dimension maxd =new Dimension(scale*world.getWorldBuilder().getCols(),scale*world.getWorldBuilder().getRows());
+            Dimension frame =new Dimension(scale*5,scale*5);
+            setPreferredSize(frame);
+            setSize(maxd);
+            setMaximumSize(maxd);
+            this.timer.stop();
+            timer= new Timer(world.getWorldBuilder().getDifficulty().getSpeed(),this);
+            timer.start();
+            
+           
+            repaint();
+       }
     
     }
+    
+   
     @Override
     
     protected void paintComponent(Graphics g){
         
         
         Graphics2D gr = (Graphics2D)g;
-        playerPos=WB.getPlayer();
-        dragonPos=WB.getDragon();
+        Position playerPos= world.getWorldBuilder().getPlayer();
+        Position dragonPos= world.getWorldBuilder().getDragon();
         Image img = null;
         int i,j;
         
-        for( i=0;i<WB.getRows();i++){
-            for(j=0;j<WB.getCols();j++){
-                WorldItem wi = WB.getWorldItemMatrix()[i][j];
+        for( i=0;i< world.getWorldBuilder().getRows();i++){
+            for(j=0;j< world.getWorldBuilder().getCols();j++){
+       
+                WorldItem wi =  world.getWorldBuilder().getWorldItemMatrix()[i][j];
+                
                 switch(wi){
                     
-                    case TREE:   img=tree; break;
-                    case PATH:   img=path;break;       
-                   
+                    case TREE:          img=wall; break;
+                    case PATH:          img=path;break;       
+                    case DESTINATION:   img=destination;break;
                     default:
                         
                         break; 
@@ -105,26 +100,30 @@ public class Board extends javax.swing.JPanel implements ActionListener{
                 if(dragonPos.i==i&&dragonPos.j==j){img=dragon;}
                 if (img == null) continue;
                 
-//                if(img==dragon){
-//                    gr.drawImage(img , j, i, scale,scale, null);
-//                }else{
-                gr.drawImage(img , j*scale, i*scale, 62,62, null);}
-            //}
+
+                gr.drawImage(img , j*scale, i*scale, scale,scale, null);
+                setLocation(scale-(playerPos.j*120),scale-(playerPos.i*120));
+                            
+                
+            }
        
         }
+        
+        
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         Random rnd = new Random();
-        
-        int range = world.dragonHunsh().size();
-        
-       
+        int range = world.dragonHunch().size();
         int randomIndex =rnd.nextInt(range);
         
-        WB.moveDragon((model.Direction) world.dragonHunsh().get(randomIndex));
-      
+        world.getWorldBuilder().moveDragon((model.Direction) world.dragonHunch().get(randomIndex));
+          if(world.getWorldBuilder().isEaten()){
+                   
+                   JOptionPane.showMessageDialog(JF, "Dead", "Game over", JOptionPane.INFORMATION_MESSAGE);
+                   world.loadNewWorld(world.getWorldBuilder().getDifficulty().getMap());
+               }
         repaint();
         
         

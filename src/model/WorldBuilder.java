@@ -7,11 +7,12 @@ package model;
 
 import java.util.ArrayList;
 import java.util.Scanner;
+import res.Difficulty;
 import res.Resource;
 
 
 
-public class WorldBuilder {
+public final  class WorldBuilder {
     private int cols; 
     private int rows;
     
@@ -19,28 +20,45 @@ public class WorldBuilder {
     private WorldItem[][] WorldItemMatrix;
     
     
-    public Position  player = new Position(0, 0);
-    public Position  dragon = new Position(0, 0);
+    private Position  player;
+    private Position  dragon;
     
-    public int numSteps=0;
+    private int numSteps=0;
     
-    public WorldBuilder(){
+    private Difficulty diff;
+    
+    public WorldBuilder(Difficulty D){
+        
+        player = new Position(0, 0);
+        dragon = new Position(0, 0);
+        
         
         stringMap = new ArrayList<>();
+        diff=D;
+        
+        readMap(); //reading into arrylist of strings (map rows) -- stringMap
+        
+        cols  =   stringMap.get(1).length();
+        rows  =   stringMap.size();
+         
+        WorldItemMatrix = new WorldItem[rows][cols];
         
         build();
         
-    
     }
     
-    protected final void build(){
-        
-        //user readLevel()
-        //translate levelMatrix into worlditems
-        readLevel();
+    public final void rebuild(){
         
         WorldItemMatrix = new WorldItem[rows][cols];
-
+        build();
+    }
+    /**
+     * building the WorldItemMatrix based on stringMap(read map from text file)
+     */
+     protected final void build(){
+         
+         
+         
         for(int i=0; i<rows; i++){
             
             String line = stringMap.get(i);
@@ -58,12 +76,15 @@ public class WorldBuilder {
                         
                         dragon=new Position(i,j);
                         
-                        WorldItemMatrix[i][j] = WorldItem.PATH; break;
+                        WorldItemMatrix[i][j] = WorldItem.DRAGON; break;
                     case 'p':
                         
                         player=new Position(i,j);
                         
-                        WorldItemMatrix[i][j] = WorldItem.PATH; break;
+                        WorldItemMatrix[i][j] = WorldItem.PLAYER; break;
+                    case 'd':
+                        
+                        WorldItemMatrix[i][j] = WorldItem.DESTINATION; break;
                         
                     default: 
                         
@@ -75,27 +96,35 @@ public class WorldBuilder {
         }
     
     }
-    
-    protected void readLevel(){
-    
-    //read level text file into levelMatrix /above\
-    //set cols and rows numbers
+     
+     /**
+      * read the text map into the stringMap
+      */
+     protected void readMap(){
+         
         
         String line;
         
-        try (Scanner sc = new Scanner(Resource.loadResource("res/maps/map1.txt"))) {
+        try (Scanner sc = new Scanner(Resource.loadResource("res/maps/map"+(diff.getMap())+".txt"))) {
             
             while(sc.hasNextLine()) {
                 
                 line = sc.nextLine();
                 stringMap.add(line);
             }
+            
+            sc.close();
         }
          
-         cols=stringMap.get(1).length();
-         rows=stringMap.size();
+         
+         
     }
-    
+     
+     /**
+      * move the item represent the player in WorldItemMatrix
+      * @param d direction
+      * @return true if it is moved 
+      */
      public boolean movePlayer(Direction d){
          
         Position curr = player;
@@ -114,7 +143,11 @@ public class WorldBuilder {
         } 
       return false;
     }
-
+     /**
+      * move the item represent the dragon in WorldItemMatrix
+      * @param d direction
+      * @return true if it is moved 
+      */
      public boolean moveDragon(Direction d){
         Position curr = dragon;
         Position next = curr.translate(d);
@@ -132,32 +165,50 @@ public class WorldBuilder {
         return false;
     }
     
-     
-     
-    public boolean isFree(Position p){
+ 
+     /**
+      * check if position given represented by a path item which means it is free
+      * @param p Position
+      * @return true if it is free
+      */
+    public boolean          isFree(Position p){
         
         if (!isValidPosition(p)) return false;
          
         WorldItem li = WorldItemMatrix[p.i][p.j];
         
-        return ( li == WorldItem.PATH);
+        return ( li == WorldItem.PATH  );
     
     }
-    
-    public boolean isDestination(Position p){
+    /**
+     * 
+     * @return true if the dragon near the player
+     */
+    public boolean          isEaten(){
         
-        if (!isValidPosition(p)) return false;
-    
-        WorldItem li = WorldItemMatrix[p.i][p.j];
+        int pos[]={dragon.i,dragon.j,player.i,player.j};
         
-        return (li == WorldItem.DESTINATION);
+        return  pos[0]==pos[2]-1&&pos[1]==pos[3]||
+                pos[0]==pos[2]+1&&pos[1]==pos[3]||
+                pos[0]==pos[2]&&pos[1]==pos[3]+1||
+                pos[0]==pos[2]&&pos[1]==pos[3]-1;
+        
     }
-    
-     public boolean isValidPosition(Position p){
+    /**
+     * 
+     * @param p
+     * @return true if the given position is not out of world limits
+     */
+    public boolean          isValidPosition(Position p){
         
          return (p.i >= 0 && p.j >= 0 && p.i < rows && p.j < cols);
     }
-     public Boolean isDragon(Position p){
+    /**
+     * 
+     * @param p Position
+     * @return true if in the given position there is a dragon
+     */
+    public boolean          isDragon(Position p){
          
          if (!isValidPosition(p)) return false;
          
@@ -165,7 +216,52 @@ public class WorldBuilder {
          
          return (li == WorldItem.DRAGON );
      }
-    public WorldItem[][] getWorldItemMatrix() {
+    /**
+     * 
+     * @param p Position
+     * @return true if in the given position there is a player
+     */
+     public boolean          isPlayer(Position p){
+         
+         if (!isValidPosition(p)) return false;
+         
+         WorldItem li = WorldItemMatrix[p.i][p.j];
+         
+         return (li == WorldItem.PLAYER );
+     }
+     /**
+      * 
+      * @param p Position
+      * @return true if the given position is destination point
+      */
+     public boolean          isDestination(Position p){
+         
+         if (!isValidPosition(p)) return false;
+         
+         WorldItem li = WorldItemMatrix[p.i][p.j];
+         
+         return (li == WorldItem.DESTINATION );
+     }
+     /**
+      * 
+      * @param d
+      * @return true if the destination is reached
+      */
+     public boolean IsReached(Direction d){
+          Position curr = player;
+          Position next = curr.translate(d);
+        
+       if (isDestination(next) && !isDragon(next)) {
+           return true;
+       }
+         return false;
+     }
+     
+
+     /*
+     getters
+     */
+    public WorldItem[][]    getWorldItemMatrix() {
         return WorldItemMatrix;
     }
     
@@ -185,6 +281,14 @@ public class WorldBuilder {
 
     public Position getDragon() {
         return dragon;
+    }
+
+    public Difficulty getDifficulty() {
+        return diff;
+    }
+
+    public int getNumSteps() {
+        return numSteps;
     }
     
     

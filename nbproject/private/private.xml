@@ -2,17 +2,6 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group>
-            <file>file:/C:/Users/Ali%20pc/Desktop/Labyrinth/src/labyrinth/Board.java</file>
-            <file>file:/C:/Users/Ali%20pc/Desktop/Labyrinth/src/labyrinth/Labyrinth.java</file>
-            <file>file:/C:/Users/Ali%20pc/Desktop/Labyrinth/src/res/Resource.java</file>
-            <file>file:/C:/Users/Ali%20pc/Desktop/Labyrinth/src/model/World.java</file>
-            <file>file:/C:/Users/Ali%20pc/Desktop/Labyrinth/src/model/WorldItem.java</file>
-            <file>file:/C:/Users/Ali%20pc/Desktop/Labyrinth/src/model/WorldBuilder.java</file>
-            <file>file:/C:/Users/Ali%20pc/Desktop/Labyrinth/src/model/Direction.java</file>
-            <file>file:/C:/Users/Ali%20pc/Desktop/Labyrinth/src/model/Position.java</file>
-            <file>file:/C:/Users/Ali%20pc/Desktop/Labyrinth/src/res/maps/map1.txt</file>
-            <file>file:/C:/Users/Ali%20pc/Desktop/Labyrinth/src/res/worldElements/dragon128.png</file>
-        </group>
+        <group/>
     </open-files>
 </project-private>
